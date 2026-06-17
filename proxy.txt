@@ -1,0 +1,4 @@
+<config>
+    <add key="http_proxy" value="http://cloudproxy.standard.corp:8080" />
+    <add key="https_proxy" value="http://cloudproxy.standard.corp:8080" />
+  </config>
