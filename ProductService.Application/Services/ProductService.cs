@@ -16,11 +16,32 @@ public class ProductService : IProductService
 {
     private readonly IGenericRepository<Product> _repository;
     private readonly IMapper _mapper;
+    private readonly ICacheService _cache;
 
+    public ProductService(IGenericRepository<Product> repository, IMapper mapper, ICacheService cache)
+    {
+        _repository = repository;
+        _mapper = mapper;
+        _cache = cache;
+    }
     public ProductService(IGenericRepository<Product> repository, IMapper mapper)
     {
         _repository = repository;
         _mapper = mapper;
+       
+    }
+
+    public async Task<ProductDTO?> GetByIdAsync(Guid id)
+    {
+        // ✅ Cache avec expiration de 5 minutes — pas de fuite mémoire
+        return await _cache.GetOrCreateAsync(
+            key: $"product:{id}",
+            factory: async () =>
+            {
+                var product = await _repository.GetByIdAsync(id);
+                return product == null ? null : _mapper.Map<ProductDTO>(product);
+            },
+            expiration: TimeSpan.FromMinutes(5));
     }
 
     public async Task<IEnumerable<ProductDTO>> GetAllAsync(int pageNumber, int pageSize, string? filter = null)
@@ -46,20 +67,20 @@ public class ProductService : IProductService
     //    return product == null ? null : _mapper.Map<ProductDTO>(product);
     //}
     // Cache statique qui n'est JAMAIS vidé
-    private static readonly Dictionary<Guid, ProductDTO> _cache = new();
+    //private static readonly Dictionary<Guid, ProductDTO> _cache = new();
 
-    public async Task<ProductDTO?> GetByIdAsync(Guid id)
-    {
-        if (_cache.TryGetValue(id, out var cached))
-            return cached;
+    //public async Task<ProductDTO?> GetByIdAsync(Guid id)
+    //{
+    //    if (_cache.TryGetValue(id, out var cached))
+    //        return cached;
 
-        var product = await _repository.GetByIdAsync(id);
-        if (product == null) return null;
+    //    var product = await _repository.GetByIdAsync(id);
+    //    if (product == null) return null;
 
-        var dto = _mapper.Map<ProductDTO>(product);
-        _cache[id] = dto; // ❌ Ajouté mais jamais retiré → grossit indéfiniment
-        return dto;
-    }
+    //    var dto = _mapper.Map<ProductDTO>(product);
+    //    _cache[id] = dto; // ❌ Ajouté mais jamais retiré → grossit indéfiniment
+    //    return dto;
+    //}
 
     public async Task<ProductDTO> CreateAsync(ProductDTO productDto)
     {

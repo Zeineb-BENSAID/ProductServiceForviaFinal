@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ProductService.Domain.Entities;
 using ProductService.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,23 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             .ToListAsync();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id) => await _dbSet.FindAsync(id);
+    //public async Task<T?> GetByIdAsync(Guid id) => await _dbSet.FindAsync(id);
+
+    // ✅ Compiled Query : la traduction LINQ → SQL est faite UNE FOIS, réutilisée ensuite
+    private static readonly Func<ProductDbContext, Guid, Task<Product?>> GetProductByIdCompiled =
+        EF.CompileAsyncQuery((ProductDbContext context, Guid id) =>
+            context.Products.AsNoTracking().FirstOrDefault(p => p.Id == id));
+
+
+    public async Task<T?> GetByIdAsync(Guid id)
+    {
+        if (typeof(T) == typeof(Product) && _context is ProductDbContext ctx)
+        {
+            return await GetProductByIdCompiled(ctx, id) as T;
+        }
+
+        return await _dbSet.FindAsync(id);
+    }
 
     public async Task AddAsync(T entity)
     {

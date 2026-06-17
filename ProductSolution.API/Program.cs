@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +9,10 @@ using ProductService.Application.Interfaces;
 using ProductService.Application.Profiles;
 using ProductService.Application.Validators;
 using ProductService.Domain.Interfaces;
+using ProductService.Infrastructure.Caching;
 using ProductService.Infrastructure.Data;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +92,14 @@ builder.Services.AddSwaggerGen(c =>
     c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 });
 
+
+// config du cach
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 1024; // limite le nombre d'entrées — évite la croissance infinie
+});
+builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+
 var app = builder.Build();
 
 // ??????????????????????????????????????????????
@@ -151,6 +160,11 @@ if (app.Environment.IsDevelopment())
                 description.GroupName.ToUpperInvariant());
     });
 }
+
+
+
+
+
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
