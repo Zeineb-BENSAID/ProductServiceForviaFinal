@@ -24,12 +24,12 @@ public class ProductService : IProductService
         _mapper = mapper;
         _cache = cache;
     }
-    public ProductService(IGenericRepository<Product> repository, IMapper mapper)
-    {
-        _repository = repository;
-        _mapper = mapper;
+    //public ProductService(IGenericRepository<Product> repository, IMapper mapper)
+    //{
+    //    _repository = repository;
+    //    _mapper = mapper;
        
-    }
+    //}
 
     public async Task<ProductDTO?> GetByIdAsync(Guid id)
     {

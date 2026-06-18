@@ -4,6 +4,6 @@ using ProductService.Benchmarks;
 
 Console.WriteLine("Hello, World!");
 
-    
-BenchmarkRunner.Run<MappingBenchmark>();
-    
+
+//BenchmarkRunner.Run<MappingBenchmark>();
+BenchmarkRunner.Run<RepositoryBenchmark>();

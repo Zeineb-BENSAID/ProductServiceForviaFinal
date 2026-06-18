@@ -16,16 +16,18 @@ namespace ProductService.Test
     {
         private readonly Mock<IGenericRepository<Product>> _repositoryMock;
         private readonly Mock<IMapper> _mapperMock;
+        private readonly Mock<ICacheService> _cacheMock;
         private readonly IProductService _service;
 
         public PSUnitTest()
         {
             _repositoryMock = new Mock<IGenericRepository<Product>>();
             _mapperMock = new Mock<IMapper>();
-            // ✅ Fix 1: Injection correcte des dépendances
+            _cacheMock = new Mock<ICacheService>();
             _service = new ProductService.Application.Services.ProductService(
                 _repositoryMock.Object,
-                _mapperMock.Object
+                _mapperMock.Object,
+                _cacheMock.Object
             );
         }
 
@@ -34,14 +36,13 @@ namespace ProductService.Test
         {
 
             var products = new List<Product>
-            {
-                Product.Create( "Test",100, "Desc",2 )
-            };
-            // ✅ Fix 2: Casse uniforme ProductDto (pas ProductDTO)
+                {
+                    Product.Create( "Test",100, "Desc",2 )
+                };
             var productDtos = new List<ProductDTO>
-            {
-                new ProductDTO { Name = "Test", Description = "Desc" ,Price=100,Stock=2}
-            };
+                {
+                    new ProductDTO { Name = "Test", Description = "Desc" ,Price=100,Stock=2}
+                };
 
             _repositoryMock
                 .Setup(r => r.GetAllAsync(
@@ -66,8 +67,8 @@ namespace ProductService.Test
         public async Task GetByIdAsync_ReturnsMappedProduct()
         {
             var id = Guid.NewGuid();
-            var product = Product.Create("Test",580, "Desc");
-            var productDto = new ProductDTO { Name = "Test", Description = "Desc",Price=580 };
+            var product = Product.Create("Test", 580, "Desc");
+            var productDto = new ProductDTO { Name = "Test", Description = "Desc", Price = 580 };
 
             _repositoryMock
                 .Setup(r => r.GetByIdAsync(id))
@@ -86,7 +87,7 @@ namespace ProductService.Test
         [Fact]
         public async Task CreateAsync_AddsProductAndReturnsDto()
         {
-            var productDto = new ProductDTO { Name = "Test", Description = "Desc",Price=200};
+            var productDto = new ProductDTO { Name = "Test", Description = "Desc", Price = 200 };
             var product = Product.Create("Test", 200, "Desc");
 
             _mapperMock
@@ -111,14 +112,13 @@ namespace ProductService.Test
         public async Task UpdateAsync_UpdatesExistingProduct()
         {
             var id = Guid.NewGuid();
-            var productDto = new ProductDTO { Name = "Updated", Description = "Updated Desc",Price=200,Stock=80 };
-            var existingProduct = Product.Create("Old",200, "Old Desc",80);
+            var productDto = new ProductDTO { Name = "Updated", Description = "Updated Desc", Price = 200, Stock = 80 };
+            var existingProduct = Product.Create("Old", 200, "Old Desc", 80);
 
             _repositoryMock
                 .Setup(r => r.GetByIdAsync(id))
                 .ReturnsAsync(existingProduct);
 
-            // ✅ Fix 3: Ajout du retour .Returns(existingProduct) sur le Map de mise à jour
             _mapperMock
                 .Setup(m => m.Map(productDto, existingProduct))
                 .Returns(existingProduct);
@@ -136,8 +136,7 @@ namespace ProductService.Test
         public async Task DeleteAsync_DeletesExistingProduct()
         {
             var id = Guid.NewGuid();
-            // ✅ Fix 4: new Product { ... } au lieu de ProductService { ... }
-            var product = Product.Create("Test",230, "Desc");
+            var product = Product.Create("Test", 230, "Desc");
 
             _repositoryMock
                 .Setup(r => r.GetByIdAsync(id))

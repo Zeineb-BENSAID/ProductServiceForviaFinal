@@ -11,6 +11,7 @@ using ProductService.Application.Validators;
 using ProductService.Domain.Interfaces;
 using ProductService.Infrastructure.Caching;
 using ProductService.Infrastructure.Data;
+using Prometheus;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -93,12 +94,22 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-// config du cach
+// config du memorycache
 builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1024; // limite le nombre d'entrées — évite la croissance infinie
 });
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+
+
+// Connecter l'application à Redis
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+//    options.InstanceName = "ProductService:";
+//});
+
+//builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 var app = builder.Build();
 
@@ -169,4 +180,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseHttpMetrics();  // collecte automatiquement les statistiques de chaque requête
+app.MapMetrics();      // crée une page spéciale /metrics que Prometheus va lire
+
 app.Run();
